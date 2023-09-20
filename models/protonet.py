@@ -9,9 +9,7 @@ from .utils.dist import euclidean_dist
 class Protonet(nn.Module):
     def __init__(self, encoder):
         super(Protonet, self).__init__()
-        
         self.encoder = encoder
-
 
     @classmethod
     def defualt_encoder(cls, x_dim=1, hid_dim=64, z_dim=64):
@@ -22,11 +20,16 @@ class Protonet(nn.Module):
             conv_block(hid_dim, z_dim),
             Flatten()
         )
-
         return cls(encoder)
     
-
     def loss(self, sample):
+        ''' prtototypical loss
+
+            params:
+                sample: dict
+                    xs: support set (n_class, n_query, ...)
+                    xq: query set (n_class, n_query, ...)
+        '''
 
         xs = Variable(sample['xs']) 
         xq = Variable(sample['xq'])
