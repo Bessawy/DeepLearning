@@ -12,11 +12,10 @@ urls = [
 
 for url, filename, foldername in urls:
     download_url(url, filename)
-    source_folder = os.path.join(DATADIR, foldername)
 
     # Unzip the file into the defined data directory
     with zipfile.ZipFile(filename, 'r') as zip_ref:
-        zip_ref.extractall(source_folder)
+        zip_ref.extractall(DATADIR)
 
     os.remove(filename)
 
