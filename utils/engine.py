@@ -5,6 +5,8 @@ class Engine:
     def __init__(self):
         hook_names = ['on_start', 'on_start_epoch', 'on_sample', 'on_forward',
                       'on_backward', 'on_end_epoch', 'on_update', 'on_end']
+        
+        
 
         self.hooks = {}
         for hook_name in hook_names:
@@ -56,3 +58,32 @@ class Engine:
 
         self.hooks['on_end'](state)
 
+    def evaluate(self, **kwargs):
+        state = {
+            'model': kwargs['model'],
+            'loader': kwargs['loader'], 
+            'desc' : kwargs['desc'], 
+            'outputs' : [],
+            'batch': 0, # samples seen in current epoch
+            'stop': False
+        }
+
+        if state['desc'] is not None:
+            data_loader = tqdm(state['loader'], desc=state['desc'])
+
+        for sample in data_loader:
+            self.hooks['on_sample'](state)
+            _, output = state['model'].loss(sample)
+            self.hooks['on_forward'](state)
+
+            state['outputs'].append(output)
+            state['batch'] += 1
+
+        return state
+    
+    def predict(self, **kwargs):
+        state = {
+            'model': kwargs['model'],
+            'loader': kwargs['loader'], 
+            'desc' : kwargs['desc'], 
+        }

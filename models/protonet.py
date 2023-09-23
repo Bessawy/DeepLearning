@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 from torch.autograd import Variable
 from .blocks import conv_block, Flatten
-from .utils.dist import euclidean_dist
+from utils.dist import euclidean_dist
 
 class Protonet(nn.Module):
     def __init__(self, encoder):
@@ -69,4 +69,34 @@ class Protonet(nn.Module):
             'acc': acc_val.item()
         }
     
+    def predict(self, sample):
+        ''' prtototypical prediction
+
+            params:
+                sample: dict
+                    xs: support set (n_class, n_query, ...)
+                    xq: query set (n_query, ...)
+        '''
+
+        xs = Variable(sample['xs']) 
+        xq = Variable(sample['xq'])
     
+        n_class = xs.size(0)
+        n_support = xs.size(1)
+        n_query = xq.size(0)
+
+        x = torch.cat([xs.view(n_class * n_support, *xs.size()[2:]),
+                    xq.view(n_query, *xq.size()[2:])], 0)
+        
+        z = self.encoder.forward(x)
+        z_dim = z.size(-1)
+
+        z_proto = z[:n_class*n_support].view(n_class, n_support, z_dim).mean(1)
+        zq = z[n_class*n_support:]  
+
+        dists = euclidean_dist(zq, z_proto)
+        log_p_y = F.log_softmax(-dists, dim=1).view(n_class, n_query, -1)
+
+        _, y_hat = log_p_y.max(2)
+
+        return y_hat
