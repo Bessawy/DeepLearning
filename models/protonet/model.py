@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from torch.autograd import Variable
-from .blocks import conv_block, Flatten
-from utils.dist import euclidean_dist
+from models.utils.blocks import conv_block, Flatten
+from models.utils.dist import euclidean_dist
 
 class Protonet(nn.Module):
     def __init__(self, encoder):
@@ -14,13 +14,28 @@ class Protonet(nn.Module):
     @classmethod
     def defualt_encoder(cls, x_dim=1, hid_dim=64, z_dim=64):
         encoder = nn.Sequential(
-            conv_block(x_dim[0], hid_dim),
+            conv_block(x_dim, hid_dim),
             conv_block(hid_dim, hid_dim),
             conv_block(hid_dim, hid_dim),
             conv_block(hid_dim, z_dim),
             Flatten()
         )
         return cls(encoder)
+    
+    def sample_validation(self, sample):
+
+        if 'xs' not in sample or 'xq' not in sample:
+            raise ValueError("Protonet loss requires support set 'xs' and query set 'xq'")
+        
+        xs = sample['xs']
+        xq = sample['xq']
+        
+        size = len(xq.size())
+        assert size == len(xs.size())
+
+        if size < 3:
+            raise ValueError("Error: Data dimension is not in the proper format. \
+                             Expected format: [_class, n_query, ...], but received: {size}.")
     
     def loss(self, sample):
         ''' prtototypical loss
@@ -30,6 +45,8 @@ class Protonet(nn.Module):
                     xs: support set (n_class, n_query, ...)
                     xq: query set (n_class, n_query, ...)
         '''
+
+        self.sample_validation(sample)
 
         xs = Variable(sample['xs']) 
         xq = Variable(sample['xq'])
@@ -80,7 +97,7 @@ class Protonet(nn.Module):
 
         xs = Variable(sample['xs']) 
         xq = Variable(sample['xq'])
-    
+        
         n_class = xs.size(0)
         n_support = xs.size(1)
         n_query = xq.size(0)

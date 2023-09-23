@@ -6,8 +6,6 @@ class Engine:
         hook_names = ['on_start', 'on_start_epoch', 'on_sample', 'on_forward',
                       'on_backward', 'on_end_epoch', 'on_update', 'on_end']
         
-        
-
         self.hooks = {}
         for hook_name in hook_names:
             self.hooks[hook_name] = lambda state: None
