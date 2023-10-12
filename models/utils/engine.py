@@ -85,3 +85,5 @@ class Engine:
             'loader': kwargs['loader'], 
             'desc' : kwargs['desc'], 
         }
+        
+        return state['model'].predict(state['loader'])       
